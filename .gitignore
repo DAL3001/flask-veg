@@ -144,3 +144,6 @@ cython_debug/
 
 # vscode config
 .vscode
+
+# vagrant stuff
+.vagrant

@@ -1,0 +1,9 @@
+all:
+  hosts:
+    veg-web:
+      ansible_host: 192.168.0.1
+      pgsql_user: postgres
+      pgsql_host: flask-api.cqvuzfsssdnv.eu-west-2.rds.amazonaws.com
+      pgsql_pass: apassword
+      pgsql_port: 5432
+      pgsql_instance: flask

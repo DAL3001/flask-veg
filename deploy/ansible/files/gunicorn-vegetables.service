@@ -7,7 +7,7 @@ User=gunicorn
 Group=www-data
 WorkingDirectory=/opt/flask-veg
 
-ExecStart=/usr/local/bin/gunicorn --bind=unix:/tmp/gunicorn.sock --workers=4 wsgi:app
+ExecStart=/usr/local/bin/gunicorn --bind=unix:/tmp/gunicorn.sock --workers=5 wsgi:app
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s TERM $MAINPID
 

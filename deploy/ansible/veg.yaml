@@ -1,0 +1,88 @@
+- hosts: veg-web
+  become: yes
+  
+  tasks:
+  - name: Install Packages
+    apt:
+      name: 
+        - python3-pip
+        - nginx
+      state: present
+      update_cache: true
+
+  - name: Create Gunicorn user
+    ansible.builtin.user:
+      name: gunicorn
+      shell: /bin/bash
+      home: /home/gunicorn
+
+  - name: Copy flask-veg app files
+    ansible.builtin.copy:
+      src: ../../flask-veg/app
+      dest: /opt/flask-veg
+      owner: gunicorn
+      group: www-data
+      mode: 0755
+
+  - name: Overwrite app config
+    template:
+      src: templates/config.py.j2
+      dest: /opt/flask-veg/config.py
+      owner: gunicorn
+      group: www-data
+      mode: '0644'
+      force: true
+  
+  - name: Copy Python package requirements
+    ansible.builtin.copy:
+      src: ../../flask-veg/requirements.txt
+      dest: /opt/flask-veg/
+      owner: gunicorn
+      group: www-data
+      mode: 0755
+
+  - name: Install specified python requirements
+    pip:
+      requirements: /opt/flask-veg/requirements.txt
+
+  - name: Configure Database
+    ansible.builtin.shell: flask db upgrade
+    args:
+      chdir: /opt/flask-veg
+
+  - name: Copy systemd unit file
+    ansible.builtin.copy:
+      src: files/gunicorn-vegetables.service
+      dest: /etc/systemd/system/flask-veg.service
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Copy nginx config
+    ansible.builtin.copy:
+      src: files/nginxconf
+      dest: /etc/nginx/sites-enabled/flask-veg
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Enable and start gunicorn service
+    ansible.builtin.systemd:
+      name: flask-veg
+      enabled: yes
+      daemon_reload: yes
+      state: started
+
+  - name: Configure nginx
+    ansible.builtin.shell: |
+      rm -f /etc/nginx/sites-enabled/default
+      ln -s /etc/nginx/sites-available/flask-veg /etc/nginx/sites-enabled/
+      nginx -t
+    notify:
+    - reload nginx
+
+  handlers:
+    - name: reload nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
